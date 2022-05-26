@@ -2,6 +2,7 @@ const express = require('express')
 const cors = require('cors');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const res = require('express/lib/response');
 
 const app = express()
 const port = process.env.PORT || 5000;
@@ -24,6 +25,28 @@ async function run() {
             const services = await cursor.toArray();
             res.send(services);
         });
+
+        app.get('/available', async (req, res) => {
+            const date = req.query.date;
+
+            //step 1: get all services
+            const services = await serviceCollection.find().toArray();
+
+            //step2: get the booking of the day
+            const query = { date: date };
+            const bookings = await bookingCollection.find(query).toArray();
+
+            //step 3: for each services, find bookings for that services
+            services.forEach(service => {
+                const serviceBookings = bookings.filter(b => b.treatment === service.name);
+                const booked = serviceBookings.map(s => s.slot);
+                service.booked = booked;
+                const available = service.slots.filter(s => !booked.includes(s));
+                service.slots = available;
+            })
+
+            res.send(services);
+        })
 
         app.post('/booking', async (req, res) => {
             const booking = req.body;
