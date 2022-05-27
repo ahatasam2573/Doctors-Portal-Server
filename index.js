@@ -20,7 +20,7 @@ function verifyJWT(req, res, next) {
         return res.status(401).send({ message: 'Unauthorized access' });
     }
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (error, decoded) {
         if (error) {
             return res.status(403).send({ message: 'Forbidden Access' })
         }
@@ -43,6 +43,11 @@ async function run() {
             const services = await cursor.toArray();
             res.send(services);
         });
+
+        app.get('/user', async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        })
 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
